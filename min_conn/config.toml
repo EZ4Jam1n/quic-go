@@ -1,0 +1,18 @@
+# mir连接方式 tcp/udp/unix
+[connConf]
+    [connType]
+        name= "tcp"
+
+    [tcpConn]
+        ip = "10.119.6.208"
+        port = 13899
+
+    [udpConn]
+        ip="127.0.0.1"
+        port=13899
+
+    [unixConn]
+        addr="/tmp/mir.sock"
+
+
+

@@ -108,16 +108,16 @@ func (s *receiveStream) isNewlyCompleted() bool {
 	if s.completed {
 		return false
 	}
-	// We need to know the final offset (either via FIN or RESET_STREAM) for flow control accounting.
+	// 我们需要知道流控会计的最终偏移量（通过 FIN 或 RESET_STREAM）。
 	if s.finalOffset == protocol.MaxByteCount {
 		return false
 	}
-	// We're done with the stream if it was cancelled locally...
+	// 如果流在本地取消，则状态为已完成。
 	if s.cancelledLocally {
 		s.completed = true
 		return true
 	}
-	// ... or if the error (either io.EOF or the reset error) was read
+	// 或者如果错误（io.EOF 或 reset 错误）已读取
 	if s.errorRead {
 		s.completed = true
 		return true
@@ -150,7 +150,6 @@ func (s *receiveStream) readImpl(p []byte) (bool, int, error) {
 		}
 
 		for {
-			// Stop waiting on errors
 			if s.closeForShutdownErr != nil {
 				return queuedNewControlFrame, bytesRead, s.closeForShutdownErr
 			}
@@ -202,8 +201,8 @@ func (s *receiveStream) readImpl(p []byte) (bool, int, error) {
 		s.readPosInFrame += m
 		bytesRead += m
 
-		// when a RESET_STREAM was received, the flow controller was already
-		// informed about the final byteOffset for this stream
+		//当收到 RESET_STREAM 时，流量控制器已经
+		//告知此流的最终 byteOffset
 		if !s.cancelledRemotely {
 			if queueMaxStreamData := s.flowController.AddBytesRead(protocol.ByteCount(m)); queueMaxStreamData {
 				s.queuedMaxStreamData = true
@@ -318,12 +317,12 @@ func (s *receiveStream) handleResetStreamFrameImpl(frame *wire.ResetStreamFrame)
 	}
 	s.finalOffset = frame.FinalSize
 
-	// ignore duplicate RESET_STREAM frames for this stream (after checking their final offset)
+	// 忽略此流的重复 RESET_STREAM 帧（在检查其最终偏移量后）
 	if s.cancelledRemotely {
 		return nil
 	}
 	s.flowController.Abandon()
-	// don't save the error if the RESET_STREAM frames was received after CancelRead was called
+	// 如果在调用 CancelRead 后收到 RESET_STREAM 帧，则不保存错误
 	if s.cancelledLocally {
 		return nil
 	}

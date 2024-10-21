@@ -9,6 +9,8 @@ import (
 	"github.com/quic-go/quic-go/internal/protocol"
 	"github.com/quic-go/quic-go/internal/utils"
 	"github.com/quic-go/quic-go/logging"
+	"github.com/quic-go/quic-go/min_conn"
+	"github.com/quic-go/quic-go/min_conn/minPacketConn"
 )
 
 type client struct {
@@ -42,11 +44,36 @@ type client struct {
 // make it possible to mock connection ID for initial generation in the tests
 var generateConnectionIDForInitial = protocol.GenerateConnectionIDForInitial
 
+// DialMinConn establishes a new QUIC connection to a server using a min connection.
+func DialMinConn(
+	ctx context.Context,
+	tlsConf *tls.Config,
+	conf *Config,
+	minConf *minPacketConn.MINConfig,
+) (Connection, error) {
+	minConn, err := minPacketConn.NewMINPacketConn_UDPSend(minConf)
+	if err != nil {
+		return nil, err
+	}
+	minAddr := &min_conn.MinPushAddr{Addr: minConf.RemoteMINAddr}
+	addr := minPacketConn.GetMinHost(minConf.RemoteMINAddr)
+	tr, err := setupTransport(minConn, tlsConf, true)
+	if err != nil {
+		return nil, err
+	}
+	return tr.dial(ctx, minAddr, addr, tlsConf, conf, false)
+}
+
 // DialAddr establishes a new QUIC connection to a server.
 // It resolves the address, and then creates a new UDP connection to dial the QUIC server.
 // When the QUIC connection is closed, this UDP connection is closed.
 // See Dial for more details.
-func DialAddr(ctx context.Context, addr string, tlsConf *tls.Config, conf *Config) (Connection, error) {
+func DialAddr(
+	ctx context.Context,
+	addr string,
+	tlsConf *tls.Config,
+	conf *Config,
+) (Connection, error) {
 	udpConn, err := net.ListenUDP("udp", &net.UDPAddr{IP: net.IPv4zero, Port: 0})
 	if err != nil {
 		return nil, err

@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"github.com/quic-go/quic-go/min_conn/minPacketConn"
 	"net"
 	"sync"
 	"time"
@@ -173,6 +174,22 @@ func (l *EarlyListener) Close() error {
 // Addr returns the local network addr that the server is listening on.
 func (l *EarlyListener) Addr() net.Addr {
 	return l.baseServer.Addr()
+}
+
+// ListenMinConn creates a QUIC server listening on a given min connection.
+func ListenMinConn(
+	tlsConf *tls.Config,
+	config *Config,
+	minConf *minPacketConn.MINConfig) (*Listener, error) {
+	minConn, err := minPacketConn.NewMINPacketConn_UDPListen(minConf)
+	if err != nil {
+		return nil, err
+	}
+	return (&Transport{
+		Conn:        minConn,
+		createdConn: true,
+		isSingleUse: true,
+	}).Listen(tlsConf, config)
 }
 
 // ListenAddr creates a QUIC server listening on a given address.
