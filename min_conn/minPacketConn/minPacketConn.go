@@ -1,4 +1,3 @@
-// implement net.packetConn
 package minPacketConn
 
 import (
@@ -28,6 +27,7 @@ const (
 	MINConn_Ether = "ether"
 )
 
+// TODO 封装成包
 func init() {
 	var abPath string
 	_, filename, _, ok := runtime.Caller(0)
