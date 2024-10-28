@@ -30,8 +30,6 @@ type streamSender interface {
 	onStreamCompleted(protocol.StreamID)
 }
 
-// Each of the both stream halves gets its own uniStreamSender.
-// This is necessary in order to keep track when both halves have been completed.
 type uniStreamSender struct {
 	streamSender
 	onStreamCompletedImpl       func()
@@ -51,10 +49,10 @@ var _ streamSender = &uniStreamSender{}
 type streamI interface {
 	Stream
 	closeForShutdown(error)
-	// for receiving
+	// 用于接收
 	handleStreamFrame(*wire.StreamFrame) error
 	handleResetStreamFrame(*wire.ResetStreamFrame) error
-	// for sending
+	// 用于发送
 	hasData() bool
 	handleStopSendingFrame(*wire.StopSendingFrame)
 	popStreamFrame(maxBytes protocol.ByteCount, v protocol.Version) (ackhandler.StreamFrame, bool, bool)
