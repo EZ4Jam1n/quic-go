@@ -73,6 +73,22 @@ type streamsMap struct {
 	reset               bool
 }
 
+type streamsMap struct {
+	ctx         context.Context
+	perspective protocol.Perspective
+
+	maxIncomingBidiStreams uint64
+	maxIncomingUniStreams  uint64
+
+	newFlowController func(protocol.StreamID) flowcontrol.StreamFlowController
+
+	mutex               sync.Mutex
+	outgoingBidiStreams *outgoingStreamsMap[streamI]
+	outgoingUniStreams  *outgoingStreamsMap[sendStreamI]
+	incomingBidiStreams *incomingStreamsMap[streamI]
+	incomingUniStreams  *incomingStreamsMap[receiveStreamI]
+}
+
 var _ streamManager = &streamsMap{}
 
 func newStreamsMap(
